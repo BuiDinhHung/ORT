@@ -54,7 +54,7 @@ onValue(dataRef, (snapshot) => {
       const diffSeconds = (now - lastUpdate) / 1000;
 
  
-      if (diffSeconds <= 60) {
+      if (diffSeconds <= 90) {
         tableData.push({
           hostName: entry.hostName || "N/A",
           IPAddress: entry.IPAddress || "N/A",
