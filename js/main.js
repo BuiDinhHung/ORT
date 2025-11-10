@@ -142,7 +142,7 @@ function applyFilterAndDisplayTable() {
           ip.startsWith("172.16.10.") ||
           ip.startsWith("172.16.80.") ||
           ip.startsWith("192.168.1.") ||
-          ip.startsWith("10.10.12.")
+          ip.startsWith("10.10.")
         );
         break;
       default:
