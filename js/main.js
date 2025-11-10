@@ -135,7 +135,7 @@ function applyFilterAndDisplayTable() {
         matchRegion = ip.startsWith("192.168.1.");
         break;
       case "binhthanh":
-        matchRegion = ip.startsWith("10.10.12.");
+        matchRegion = ip.startsWith("10.10.");
         break;
       case "khac":
         matchRegion = !(
