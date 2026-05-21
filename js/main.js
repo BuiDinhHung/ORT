@@ -12,6 +12,7 @@ let tableData = [];
 let currentRegion = "tatca";
 let currentIPFilter = "";
 let currentProfileFilter = "";
+let currentStatusFilter = "all";
 let lastRenderSignature = null;
 
 function pickFirstValue(entry, keys, fallback = "N/A") {
@@ -198,9 +199,11 @@ function applyFilterAndDisplayTable() {
     const ip = (d.IPAddress || "").toLowerCase();
     const profile = getUserNameFromPath(d.userProfile).toLowerCase();
     const loggedUser = (d.loggedUser || "").toLowerCase();
+    const status = getMachineStatus(d, now).toLowerCase();
 
     const matchIP = !ipText || ip.includes(ipText);
     const matchProfile = !profileText || profile.includes(profileText) || loggedUser.includes(profileText);
+    const matchStatus = currentStatusFilter === "all" || status === currentStatusFilter;
 
     let matchRegion = true;
     switch (currentRegion) {
@@ -228,7 +231,7 @@ function applyFilterAndDisplayTable() {
         matchRegion = true;
     }
 
-    return matchIP && matchProfile && matchRegion;
+    return matchIP && matchProfile && matchStatus && matchRegion;
   });
 
   displayTable(filtered, now);
@@ -262,6 +265,7 @@ setTimeout(() => {
 
 const ipInput = document.getElementById("filter-ip");
 const profileInput = document.getElementById("filter-profile");
+const statusInput = document.getElementById("filter-status");
 
 if (ipInput) {
   ipInput.addEventListener(
@@ -281,4 +285,11 @@ if (profileInput) {
       applyFilterAndDisplayTable();
     }, 250)
   );
+}
+
+if (statusInput) {
+  statusInput.addEventListener("change", (e) => {
+    currentStatusFilter = e.target.value || "all";
+    applyFilterAndDisplayTable();
+  });
 }

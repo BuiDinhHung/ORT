@@ -10,17 +10,26 @@
 <body>
   <div class="container py-4">
     <form class="row g-3 align-items-end mb-3">
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label for="filter-ip" class="form-label fw-bold">Filter by IP:</label>
         <input type="text" id="filter-ip" class="form-control form-control-sm" placeholder="Enter IP Address">
       </div>
 
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label for="filter-profile" class="form-label fw-bold">Filter by User:</label>
         <input type="text" id="filter-profile" class="form-control form-control-sm" placeholder="Enter user name">
       </div>
 
-      <div class="col-md-4">
+      <div class="col-md-3">
+        <label for="filter-status" class="form-label fw-bold">Filter by Status:</label>
+        <select id="filter-status" class="form-select form-select-sm">
+          <option value="all">All</option>
+          <option value="online">Online</option>
+          <option value="offline">Offline</option>
+        </select>
+      </div>
+
+      <div class="col-md-3">
         <label class="form-label fw-bold d-block">Lọc theo khu vực:</label>
         <div class="dropdown">
           <button id="dropdownMenuButton" class="btn btn-outline-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
@@ -56,6 +65,6 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <script type="module" src="js/main.js?v=connect-timeout-20260521"></script>
+  <script type="module" src="js/main.js?v=status-filter-20260521"></script>
 </body>
 </html>
