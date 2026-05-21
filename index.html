@@ -16,14 +16,14 @@
       </div>
 
       <div class="col-md-4">
-        <label for="filter-profile" class="form-label fw-bold">Filter by User Profile:</label>
-        <input type="text" id="filter-profile" class="form-control form-control-sm" placeholder="Enter Profile Name">
+        <label for="filter-profile" class="form-label fw-bold">Filter by User:</label>
+        <input type="text" id="filter-profile" class="form-control form-control-sm" placeholder="Enter user name">
       </div>
 
       <div class="col-md-4">
         <label class="form-label fw-bold d-block">Lọc theo khu vực:</label>
         <div class="dropdown">
-          <button class="btn btn-outline-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
+          <button id="dropdownMenuButton" class="btn btn-outline-primary dropdown-toggle w-100" type="button" data-bs-toggle="dropdown">
             Chọn khu vực
           </button>
           <ul class="dropdown-menu w-100">
@@ -46,10 +46,12 @@
             <th>Name</th>
             <th>IP Address</th>
             <th>Time</th>
+            <th>Status</th>
+            <th>Logged User</th>
             <th>User Profile</th>
           </tr>
         </thead>
-        <tbody><tr><td colspan="5">Loading data...</td></tr></tbody>
+        <tbody><tr><td colspan="7">Loading data...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -58,4 +60,3 @@
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
-

@@ -1,4 +1,3 @@
-
 import { firebaseConfig } from "./config.js";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
@@ -12,10 +11,25 @@ let currentRegion = "tatca";
 let currentIPFilter = "";
 let currentProfileFilter = "";
 
+function pickFirstValue(entry, keys, fallback = "N/A") {
+  for (const key of keys) {
+    const value = entry?.[key];
+    if (value !== undefined && value !== null && String(value).trim() !== "") {
+      return value;
+    }
+  }
+
+  return fallback;
+}
+
+function getUserNameFromPath(path) {
+  return String(path || "N/A").split("\\").pop();
+}
 
 function parseFlexibleDate(dateStr) {
   try {
-    let cleanStr = dateStr.trim()
+    const cleanStr = String(dateStr)
+      .trim()
       .replace(" SA", " AM")
       .replace(" CH", " PM");
 
@@ -28,46 +42,57 @@ function parseFlexibleDate(dateStr) {
 
     const [datePart, timePart, meridian] = cleanStr.split(" ");
     const [d1, d2, d3] = datePart.split("/");
-    let day, month, year;
-    if (parseInt(d1) > 12) {
-      day = d1; month = d2; year = d3;
+    let day;
+    let month;
+    let year;
+
+    if (parseInt(d1, 10) > 12) {
+      day = d1;
+      month = d2;
+      year = d3;
     } else {
-      month = d1; day = d2; year = d3;
+      month = d1;
+      day = d2;
+      year = d3;
     }
+
     return new Date(`${month}/${day}/${year} ${timePart} ${meridian || ""}`);
   } catch {
-    return new Date(dateStr.replace(" ", "T"));
+    return new Date(String(dateStr).replace(" ", "T"));
   }
+}
+
+function getEntrySortTime(entry) {
+  if (!entry?.time) return 0;
+
+  const date = parseFlexibleDate(entry.time);
+  return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
 onValue(dataRef, (snapshot) => {
   const data = snapshot.val();
   tableData = [];
-  const now = new Date();
 
   if (data) {
     for (const key in data) {
       const entry = data[key];
-      if (!entry.time) continue;
 
-      const lastUpdate = parseFlexibleDate(entry.time);
-      const diffSeconds = (now - lastUpdate) / 1000;
-
- 
-      if (diffSeconds <= 90) {
-        tableData.push({
-          hostName: entry.hostName || "N/A",
-          IPAddress: entry.IPAddress || "N/A",
-          time: entry.time || "N/A",
-          userProfile: entry.userProfile || "N/A",
-        });
-      }
+      tableData.push({
+        hostName: pickFirstValue(entry, ["hostName", "computername", "computerName"], key),
+        IPAddress: pickFirstValue(entry, ["IPAddress", "IPaddress", "ipAddress", "ip"]),
+        isOnline: Boolean(entry.isOnline),
+        loggedUser: pickFirstValue(entry, ["loggedUser", "userName", "username"], ""),
+        time: entry.time || "N/A",
+        userProfile: pickFirstValue(entry, ["userProfile"], ""),
+        sortTime: getEntrySortTime(entry),
+      });
     }
+
+    tableData.sort((a, b) => b.sortTime - a.sortTime);
   }
 
   applyFilterAndDisplayTable();
 });
-
 
 function displayTable(data) {
   const tbody = document.querySelector("#data-table tbody");
@@ -87,17 +112,18 @@ function displayTable(data) {
           <button class="btn btn-info btn-sm copy-btn ms-2" onclick="copyToClipboard('${entry.IPAddress}')">Copy</button>
         </td>
         <td>${entry.time}</td>
-        <td>${entry.userProfile.split("\\").pop()}</td>
+        <td>${entry.isOnline ? "Online" : "Offline"}</td>
+        <td>${entry.loggedUser || getUserNameFromPath(entry.userProfile)}</td>
+        <td>${getUserNameFromPath(entry.userProfile)}</td>
       `;
       tbody.appendChild(row);
     });
   } else {
-    tbody.innerHTML = `<tr><td colspan="5" class="text-center text-light">No active machines</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-light">No machines found</td></tr>`;
   }
 
   setTimeout(() => (tbody.scrollTop = prevScroll), 0);
 }
-
 
 window.copyToClipboard = function (value) {
   navigator.clipboard.writeText(value);
@@ -117,11 +143,11 @@ function applyFilterAndDisplayTable() {
 
   const filtered = tableData.filter((d) => {
     const ip = (d.IPAddress || "").toLowerCase();
-    const profile = d.userProfile.split("\\").pop().toLowerCase();
+    const profile = getUserNameFromPath(d.userProfile).toLowerCase();
+    const loggedUser = (d.loggedUser || "").toLowerCase();
 
- 
     const matchIP = !ipText || ip.includes(ipText);
-    const matchProfile = !profileText || profile.includes(profileText);
+    const matchProfile = !profileText || profile.includes(profileText) || loggedUser.includes(profileText);
 
     let matchRegion = true;
     switch (currentRegion) {
@@ -154,6 +180,7 @@ function applyFilterAndDisplayTable() {
 
   displayTable(filtered);
 }
+
 window.locTheoKhuVuc = function (khuVuc) {
   currentRegion = khuVuc || "tatca";
 
@@ -172,6 +199,7 @@ window.locTheoKhuVuc = function (khuVuc) {
 
   applyFilterAndDisplayTable();
 };
+
 const ipInput = document.getElementById("filter-ip");
 const profileInput = document.getElementById("filter-profile");
 
