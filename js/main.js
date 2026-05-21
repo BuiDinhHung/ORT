@@ -1,4 +1,4 @@
-import { firebaseConfig } from "./config.js";
+import { firebaseConfig } from "./config.js?v=20260521";
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
 import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
 
