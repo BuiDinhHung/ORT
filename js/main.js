@@ -254,6 +254,11 @@ window.locTheoKhuVuc = function (khuVuc) {
 };
 
 setInterval(applyFilterAndDisplayTable, 30 * 1000);
+setTimeout(() => {
+  if (lastRenderSignature === null) {
+    showTableMessage("Connecting to Firebase...");
+  }
+}, 10 * 1000);
 
 const ipInput = document.getElementById("filter-ip");
 const profileInput = document.getElementById("filter-profile");
