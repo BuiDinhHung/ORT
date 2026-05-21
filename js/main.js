@@ -12,6 +12,7 @@ let tableData = [];
 let currentRegion = "tatca";
 let currentIPFilter = "";
 let currentProfileFilter = "";
+let lastRenderSignature = "";
 
 function pickFirstValue(entry, keys, fallback = "N/A") {
   for (const key of keys) {
@@ -84,6 +85,20 @@ function getMachineStatus(entry, now = Date.now()) {
   return getAgeSeconds(entry.sortTime, now) <= ONLINE_GRACE_SECONDS ? "Online" : "Offline";
 }
 
+function getRenderSignature(data, now = Date.now()) {
+  return data
+    .map((entry, index) =>
+      [
+        index + 1,
+        entry.hostName,
+        entry.IPAddress,
+        getMachineStatus(entry, now),
+        getUserNameFromPath(entry.userProfile),
+      ].join("|")
+    )
+    .join("\n");
+}
+
 onValue(dataRef, (snapshot) => {
   const data = snapshot.val();
   tableData = [];
@@ -102,23 +117,30 @@ onValue(dataRef, (snapshot) => {
       });
     }
 
-    tableData.sort((a, b) => b.sortTime - a.sortTime);
+    tableData.sort((a, b) => {
+      const byName = a.hostName.localeCompare(b.hostName, undefined, { numeric: true, sensitivity: "base" });
+      return byName || a.IPAddress.localeCompare(b.IPAddress, undefined, { numeric: true, sensitivity: "base" });
+    });
   }
 
   applyFilterAndDisplayTable();
 });
 
-function displayTable(data) {
+function displayTable(data, now = Date.now()) {
   const tbody = document.querySelector("#data-table tbody");
   if (!tbody) return;
 
+  const renderSignature = getRenderSignature(data, now);
+  if (renderSignature === lastRenderSignature) return;
+
+  lastRenderSignature = renderSignature;
   const prevScroll = tbody.scrollTop;
   tbody.innerHTML = "";
 
   if (data.length > 0) {
     data.forEach((entry, index) => {
       const row = document.createElement("tr");
-      const status = getMachineStatus(entry);
+      const status = getMachineStatus(entry, now);
       row.innerHTML = `
         <td>${index + 1}</td>
         <td>${entry.hostName}</td>
@@ -128,13 +150,12 @@ function displayTable(data) {
         </td>
         <td>${entry.time}</td>
         <td><span class="status-badge status-${status.toLowerCase()}">${status}</span></td>
-        <td>${entry.loggedUser || getUserNameFromPath(entry.userProfile)}</td>
         <td>${getUserNameFromPath(entry.userProfile)}</td>
       `;
       tbody.appendChild(row);
     });
   } else {
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center text-light">No machines found</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-light">No machines found</td></tr>`;
   }
 
   setTimeout(() => (tbody.scrollTop = prevScroll), 0);
@@ -196,7 +217,7 @@ function applyFilterAndDisplayTable() {
     return matchIP && matchProfile && matchRegion;
   });
 
-  displayTable(filtered);
+  displayTable(filtered, now);
 }
 
 window.locTheoKhuVuc = function (khuVuc) {
