@@ -5,6 +5,8 @@ import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10
 const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const dataRef = ref(database, "idnumber");
+const ONLINE_GRACE_SECONDS = 90;
+const STALE_RECORD_SECONDS = 24 * 60 * 60;
 
 let tableData = [];
 let currentRegion = "tatca";
@@ -69,6 +71,19 @@ function getEntrySortTime(entry) {
   return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 }
 
+function getAgeSeconds(sortTime, now = Date.now()) {
+  if (!sortTime) return Number.POSITIVE_INFINITY;
+  return Math.max(0, (now - sortTime) / 1000);
+}
+
+function isVisibleRecord(entry, now = Date.now()) {
+  return getAgeSeconds(entry.sortTime, now) <= STALE_RECORD_SECONDS;
+}
+
+function getMachineStatus(entry, now = Date.now()) {
+  return getAgeSeconds(entry.sortTime, now) <= ONLINE_GRACE_SECONDS ? "Online" : "Offline";
+}
+
 onValue(dataRef, (snapshot) => {
   const data = snapshot.val();
   tableData = [];
@@ -80,7 +95,6 @@ onValue(dataRef, (snapshot) => {
       tableData.push({
         hostName: pickFirstValue(entry, ["hostName", "computername", "computerName"], key),
         IPAddress: pickFirstValue(entry, ["IPAddress", "IPaddress", "ipAddress", "ip"]),
-        isOnline: Boolean(entry.isOnline),
         loggedUser: pickFirstValue(entry, ["loggedUser", "userName", "username"], ""),
         time: entry.time || "N/A",
         userProfile: pickFirstValue(entry, ["userProfile"], ""),
@@ -104,6 +118,7 @@ function displayTable(data) {
   if (data.length > 0) {
     data.forEach((entry, index) => {
       const row = document.createElement("tr");
+      const status = getMachineStatus(entry);
       row.innerHTML = `
         <td>${index + 1}</td>
         <td>${entry.hostName}</td>
@@ -112,7 +127,7 @@ function displayTable(data) {
           <button class="btn btn-info btn-sm copy-btn ms-2" onclick="copyToClipboard('${entry.IPAddress}')">Copy</button>
         </td>
         <td>${entry.time}</td>
-        <td>${entry.isOnline ? "Online" : "Offline"}</td>
+        <td><span class="status-badge status-${status.toLowerCase()}">${status}</span></td>
         <td>${entry.loggedUser || getUserNameFromPath(entry.userProfile)}</td>
         <td>${getUserNameFromPath(entry.userProfile)}</td>
       `;
@@ -140,8 +155,11 @@ function debounce(fn, wait) {
 function applyFilterAndDisplayTable() {
   const ipText = currentIPFilter.toLowerCase().trim();
   const profileText = currentProfileFilter.toLowerCase().trim();
+  const now = Date.now();
 
   const filtered = tableData.filter((d) => {
+    if (!isVisibleRecord(d, now)) return false;
+
     const ip = (d.IPAddress || "").toLowerCase();
     const profile = getUserNameFromPath(d.userProfile).toLowerCase();
     const loggedUser = (d.loggedUser || "").toLowerCase();
@@ -199,6 +217,8 @@ window.locTheoKhuVuc = function (khuVuc) {
 
   applyFilterAndDisplayTable();
 };
+
+setInterval(applyFilterAndDisplayTable, 30 * 1000);
 
 const ipInput = document.getElementById("filter-ip");
 const profileInput = document.getElementById("filter-profile");

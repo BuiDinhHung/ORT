@@ -54,6 +54,28 @@ button.copy-btn {
     font-size: 12px;
 }
 
+.status-badge {
+    display: inline-flex;
+    min-width: 72px;
+    justify-content: center;
+    border-radius: 999px;
+    padding: 4px 10px;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.status-online {
+    background: rgba(25, 135, 84, 0.18);
+    color: #0f5132;
+    border: 1px solid rgba(25, 135, 84, 0.45);
+}
+
+.status-offline {
+    background: rgba(220, 53, 69, 0.15);
+    color: #842029;
+    border: 1px solid rgba(220, 53, 69, 0.38);
+}
+
 ::-webkit-scrollbar {
     width: 8px;
 }
