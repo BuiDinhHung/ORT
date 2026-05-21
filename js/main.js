@@ -12,7 +12,7 @@ let tableData = [];
 let currentRegion = "tatca";
 let currentIPFilter = "";
 let currentProfileFilter = "";
-let lastRenderSignature = "";
+let lastRenderSignature = null;
 
 function pickFirstValue(entry, keys, fallback = "N/A") {
   for (const key of keys) {
@@ -99,32 +99,46 @@ function getRenderSignature(data, now = Date.now()) {
     .join("\n");
 }
 
-onValue(dataRef, (snapshot) => {
-  const data = snapshot.val();
-  tableData = [];
+function showTableMessage(message) {
+  const tbody = document.querySelector("#data-table tbody");
+  if (!tbody) return;
 
-  if (data) {
-    for (const key in data) {
-      const entry = data[key];
+  lastRenderSignature = null;
+  tbody.innerHTML = `<tr><td colspan="6" class="text-center text-light">${message}</td></tr>`;
+}
 
-      tableData.push({
-        hostName: pickFirstValue(entry, ["hostName", "computername", "computerName"], key),
-        IPAddress: pickFirstValue(entry, ["IPAddress", "IPaddress", "ipAddress", "ip"]),
-        loggedUser: pickFirstValue(entry, ["loggedUser", "userName", "username"], ""),
-        time: entry.time || "N/A",
-        userProfile: pickFirstValue(entry, ["userProfile"], ""),
-        sortTime: getEntrySortTime(entry),
+onValue(
+  dataRef,
+  (snapshot) => {
+    const data = snapshot.val();
+    tableData = [];
+
+    if (data) {
+      for (const key in data) {
+        const entry = data[key];
+
+        tableData.push({
+          hostName: pickFirstValue(entry, ["hostName", "computername", "computerName"], key),
+          IPAddress: pickFirstValue(entry, ["IPAddress", "IPaddress", "ipAddress", "ip"]),
+          loggedUser: pickFirstValue(entry, ["loggedUser", "userName", "username"], ""),
+          time: entry.time || "N/A",
+          userProfile: pickFirstValue(entry, ["userProfile"], ""),
+          sortTime: getEntrySortTime(entry),
+        });
+      }
+
+      tableData.sort((a, b) => {
+        const byName = a.hostName.localeCompare(b.hostName, undefined, { numeric: true, sensitivity: "base" });
+        return byName || a.IPAddress.localeCompare(b.IPAddress, undefined, { numeric: true, sensitivity: "base" });
       });
     }
 
-    tableData.sort((a, b) => {
-      const byName = a.hostName.localeCompare(b.hostName, undefined, { numeric: true, sensitivity: "base" });
-      return byName || a.IPAddress.localeCompare(b.IPAddress, undefined, { numeric: true, sensitivity: "base" });
-    });
+    applyFilterAndDisplayTable();
+  },
+  (error) => {
+    showTableMessage(`Cannot load Firebase data: ${error.message}`);
   }
-
-  applyFilterAndDisplayTable();
-});
+);
 
 function displayTable(data, now = Date.now()) {
   const tbody = document.querySelector("#data-table tbody");
