@@ -26,8 +26,12 @@ function pickFirstValue(entry, keys, fallback = "N/A") {
   return fallback;
 }
 
-function getUserNameFromPath(path) {
-  return String(path || "N/A").split("\\").pop();
+function getUserNameFromPath(path, fallback = "N/A") {
+  return String(path || fallback).split("\\").pop();
+}
+
+function getDisplayUser(entry) {
+  return getUserNameFromPath(entry.userProfile, entry.loggedUser || "N/A");
 }
 
 function parseFlexibleDate(dateStr) {
@@ -94,7 +98,7 @@ function getRenderSignature(data, now = Date.now()) {
         entry.hostName,
         entry.IPAddress,
         getMachineStatus(entry, now),
-        getUserNameFromPath(entry.userProfile),
+        getDisplayUser(entry),
       ].join("|")
     )
     .join("\n");
@@ -165,7 +169,7 @@ function displayTable(data, now = Date.now()) {
         </td>
         <td>${entry.time}</td>
         <td><span class="status-badge status-${status.toLowerCase()}">${status}</span></td>
-        <td>${getUserNameFromPath(entry.userProfile)}</td>
+        <td>${getDisplayUser(entry)}</td>
       `;
       tbody.appendChild(row);
     });
@@ -197,7 +201,7 @@ function applyFilterAndDisplayTable() {
     if (!isVisibleRecord(d, now)) return false;
 
     const ip = (d.IPAddress || "").toLowerCase();
-    const profile = getUserNameFromPath(d.userProfile).toLowerCase();
+    const profile = getDisplayUser(d).toLowerCase();
     const loggedUser = (d.loggedUser || "").toLowerCase();
     const status = getMachineStatus(d, now).toLowerCase();
 
@@ -216,6 +220,9 @@ function applyFilterAndDisplayTable() {
       case "quangngai":
         matchRegion = ip.startsWith("192.168.1.");
         break;
+      case "quangnam":
+        matchRegion = ip.startsWith("192.168.19.");
+        break;
       case "binhthanh":
         matchRegion = ip.startsWith("10.10.");
         break;
@@ -224,6 +231,7 @@ function applyFilterAndDisplayTable() {
           ip.startsWith("172.16.10.") ||
           ip.startsWith("172.16.80.") ||
           ip.startsWith("192.168.1.") ||
+          ip.startsWith("192.168.19.") ||
           ip.startsWith("10.10.")
         );
         break;
@@ -247,6 +255,7 @@ window.locTheoKhuVuc = function (khuVuc) {
       cantho: "Cần Thơ",
       daklak: "Đắk Lắk",
       quangngai: "Quảng Ngãi",
+      quangnam: "Quảng Nam",
       binhthanh: "Bình Thạnh",
       khac: "Khác",
     };
